@@ -1,5 +1,6 @@
 import { MTR_LINES, MTR_NAMES, MTR_ZH } from "./mtr-data.js";
 import { createStore, storeAnswer, stationLeds, dueAt, lineInfo, mtrUrl } from "./mtr.js";
+import { buildMap, stationInfo } from "./map.js";
 import { fetchJson, getSettings, saveSettings, log, stats, avg, onRequest, debugFile, VERSION } from "./net.js";
 
 const $ = (s) => document.querySelector(s);
@@ -18,7 +19,8 @@ function showTab(name) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.id === `tab-${name}`));
   try { history.replaceState(null, "", `#${name}`); } catch { /* ignore */ }
   if (name === "debug") renderDebug();
-  if (name === "hongkong" && !hk.running) startHk("live");
+  if ((name === "hongkong" || name === "map") && !hk.running) startHk("live");
+  if (name === "map") renderMap();
 }
 
 // ---------------------------------------------------------------- Hong Kong
@@ -94,11 +96,15 @@ function startHk(mode) {
 }
 function stopHk() { hk.running = false; hk.gen++; updateHkButtons(); }
 function updateHkButtons() {
-  $("#hk-start").textContent = hk.running && hk.mode === "live" ? "Pause" : "Start live";
-  $("#hk-replay").textContent = hk.running && hk.mode === "replay" ? "Stop replay" : "Replay recording";
+  for (const p of ["hk", "map"]) {
+    $(`#${p}-start`).textContent = hk.running && hk.mode === "live" ? "Pause" : "Start live";
+    $(`#${p}-replay`).textContent = hk.running && hk.mode === "replay" ? "Stop replay" : "Replay recording";
+  }
 }
-$("#hk-start").addEventListener("click", () => (hk.running && hk.mode === "live" ? stopHk() : startHk("live")));
-$("#hk-replay").addEventListener("click", () => (hk.running && hk.mode === "replay" ? stopHk() : startHk("replay")));
+for (const p of ["hk", "map"]) {
+  $(`#${p}-start`).addEventListener("click", () => (hk.running && hk.mode === "live" ? stopHk() : startHk("live")));
+  $(`#${p}-replay`).addEventListener("click", () => (hk.running && hk.mode === "replay" ? stopHk() : startHk("replay")));
+}
 
 function renderChips() {
   $("#hk-lines").innerHTML = Object.entries(MTR_LINES).map(([code, l]) =>
@@ -115,15 +121,24 @@ function renderChips() {
 
 function renderHk() {
   const now = hkNow();
+  $("#hk-status").innerHTML = hkStatusHtml();
+  $("#hk-board").innerHTML = boardHtml(now);
+  renderHkStats();
+}
+
+function hkStatusHtml() {
+  const now = hkNow();
   const hkClock = new Date(now).toLocaleTimeString("en-GB", { timeZone: "Asia/Hong_Kong" });
   const tag = hk.mode === "replay" && hk.running ? `<span class="replay-tag">REPLAY</span>` : "";
   const total = hkJobs().length;
   const known = hkJobs().filter(([l, s]) => hk.store.arr.has(`${l}-${s}`)).length;
-  $("#hk-status").innerHTML = `${tag}Hong Kong time ${hkClock} · ${known}/${total} stations have data`
+  return `${tag}Hong Kong time ${hkClock} · ${known}/${total} stations have data`
     + (hk.running ? "" : " · paused")
     + (hk.lastErr ? ` <span class="err">- last error: ${esc(hk.lastErr)}${hk.lastErr.includes("CORS") ? " (set a proxy for MTR in Settings)" : ""}</span>` : "");
+}
 
-  $("#hk-board").innerHTML = [...hk.enabled].map((line) => {
+function boardHtml(now) {
+  return [...hk.enabled].map((line) => {
     const L = MTR_LINES[line];
     const codes = L.stations;
     const info = lineInfo(hk.store, line, now);
@@ -144,13 +159,38 @@ function renderHk() {
       ${info.closed ? `<span class="meta">no train within 30 min: closed for the night</span>` : ""}</header>
       <div class="strip" style="${cols}">${strip}${labels}</div></div>`;
   }).join("");
+}
 
+function renderHkStats() {
   const mtrReqs = log.requests.filter((r) => r.url.includes("rt.data.gov.hk"));
   const ms = mtrReqs.slice(-200).map((r) => r.ms);
   $("#hk-stats").textContent = hk.mode === "replay"
     ? "Replay of 396 answers recorded with mtr_live_test.py on 17 Nov 2026 (no requests are made)"
     : `MTR requests ${mtrReqs.length} · avg ${avg(ms) ?? "-"} ms · HTTP 429: ${stats.http429} · blocked: ${stats.blocked}`;
 }
+
+// ---------------------------------------------------------------- Map
+let map = null, mapStation = null;
+function renderMap() {
+  if (!map) map = buildMap($("#map-svg"), (id) => { mapStation = id; map.select(id); renderMapInfo(); });
+  const now = hkNow();
+  const { lit, total } = map.update(hk.store, now, $("#map-mode").value);
+  $("#map-status").innerHTML = `${hkStatusHtml()} · ${lit} of ${total} LEDs lit`;
+  renderMapInfo();
+}
+function renderMapInfo() {
+  if (!mapStation) return;
+  const now = hkNow();
+  const rows = stationInfo(hk.store, mapStation, now).map((r) => {
+    const dest = (code) => MTR_NAMES[code] || code;
+    const list = r.none ? `<span class="hint">${r.none}</span>`
+      : r.trains.map(([s, d]) => `<span class="tt">${s <= 30 ? "now" : `${Math.ceil(s / 60)} min`}</span> ${esc(dest(d))}`).join(" · ");
+    return `<div class="info-row"><span class="badge" style="background:${r.color}">${r.code}</span><span>${list}</span></div>`;
+  }).join("");
+  $("#map-info").innerHTML = `<h2>${esc(MTR_NAMES[mapStation] || mapStation)} <span class="zh">${esc(MTR_ZH[mapStation] || "")}</span></h2>`
+    + (rows || `<span class="hint">Not in the polled station lists yet.</span>`);
+}
+$("#map-mode").addEventListener("change", renderMap);
 
 // ---------------------------------------------------------------- Debug
 let debugPending = false;
@@ -222,7 +262,10 @@ $("#set-test").addEventListener("click", async () => {
 // ---------------------------------------------------------------- start
 fillSettings();
 renderChips();
-setInterval(() => { if (activeTab === "hongkong") renderHk(); }, 1000);
+setInterval(() => {
+  if (activeTab === "hongkong") renderHk();
+  if (activeTab === "map") renderMap();
+}, 1000);
 const first = location.hash.replace("#", "");
-showTab(["hongkong", "debug", "settings"].includes(first) ? first : "hongkong");
+showTab(["hongkong", "map", "debug", "settings"].includes(first) ? first : "hongkong");
 renderHk();

@@ -88,6 +88,18 @@ main { padding: 20px clamp(14px, 3vw, 32px) 60px; max-width: 1400px; margin: 0 a
 .foot { margin-top: 14px; color: var(--muted); font-size: 13px; font-family: var(--mono); }
 .replay-tag { background: var(--led-on); color: #000; border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 700; margin-right: 6px; }
 
+/* Map */
+.map-wrap { background: #0b0e11; border-radius: 14px; padding: 8px; }
+#map-svg { display: block; width: 100%; height: auto; }
+#map-svg .breathe { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { opacity: 0.18; } 50% { opacity: 1; } }
+.map-info { margin-top: 14px; }
+.map-info h2 .zh { color: var(--muted); font-weight: 500; margin-left: 6px; }
+.info-row { display: flex; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
+.info-row .badge { flex: none; }
+.tt { font-family: var(--mono); font-weight: 600; }
+select.btn { padding-right: 8px; }
+
 /* Debug */
 .table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
 table.log { border-collapse: collapse; width: 100%; font-size: 12.5px; }

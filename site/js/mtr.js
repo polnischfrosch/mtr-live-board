@@ -122,18 +122,28 @@ function atTerminus(st, line, order, k, d, now) {
 /** Cells per station in list order: "on", "off" or "unknown". */
 export function stationLeds(st, line, d, now) {
   const order = travelOrder(st, line, d);
-  const cells = {};
+  const cells = {}, standing = {};
   order.forEach((sta, k) => {
     const fut = trains(st, line, sta, d, now, GRACE);
     if (fut === null || (k && !st.arr.has(key(line, order[k - 1])))) cells[sta] = "unknown";
-    else if (k === 0) cells[sta] = fut.length && fut[0][0] <= FIRST_LIT ? "on" : "off";
-    else if (fut.length) {
-      const standing = Math.abs(fut[0][0]) <= GRACE;
-      cells[sta] = standing || occupied(st, line, order, k, d, now) ? "on" : "off";
+    else if (k === 0) {
+      const at = fut.length > 0 && fut[0][0] <= FIRST_LIT;       // waiting to depart
+      cells[sta] = at ? "on" : "off";
+      standing[sta] = at;
+    } else if (fut.length) {
+      const at = Math.abs(fut[0][0]) <= GRACE;
+      cells[sta] = at || occupied(st, line, order, k, d, now) ? "on" : "off";
+      standing[sta] = at;
     } else cells[sta] = atTerminus(st, line, order, k, d, now) ? "on" : "off"; // no list: terminus
   });
-  const out = MTR_LINES[line].stations.map((s) => cells[s]);
-  return { cells: out, lit: out.filter((c) => c === "on").length, end: order[order.length - 1] };
+  const codes = MTR_LINES[line].stations;
+  const out = codes.map((s) => cells[s]);
+  return {
+    cells: out,
+    standing: codes.map((s) => Boolean(standing[s])),   // true: at the platform, false: on its way
+    lit: out.filter((c) => c === "on").length,
+    end: order[order.length - 1],
+  };
 }
 
 /** Next poll time (ms) for a station: after 60 s, sooner if fewer than 2 future trains are stored. */
