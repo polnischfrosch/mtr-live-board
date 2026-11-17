@@ -149,7 +149,7 @@ function boardHtml(now) {
     const strip = rows.map((r) => {
       const arrow = r.end === codes[codes.length - 1] ? "→" : "←";
       return `<div class="lab">${arrow} ${esc(MTR_NAMES[r.end] || r.end)}</div>`
-        + r.cells.map((c, i) => `<div class="cell" title="${esc(MTR_NAMES[codes[i]])} ${esc(MTR_ZH[codes[i]] || "")}"><span class="led ${c}" ${c === "on" ? `style="background:${L.color};box-shadow:0 0 8px ${L.color}"` : ""}></span></div>`).join("")
+        + r.cells.map((c, i) => `<div class="cell" title="${esc(MTR_NAMES[codes[i]])} ${esc(MTR_ZH[codes[i]] || "")}"><span class="led ${c}" ${c === "on" ? `style="background:${L.color};box-shadow:0 0 8px ${L.color};opacity:${(0.25 + 0.75 * r.level[i]).toFixed(2)}"` : ""}></span></div>`).join("")
         + `<div class="cnt">${r.lit} lit</div>`;
     }).join("");
     const labels = `<div></div>` + codes.map((c) => `<div class="code">${c}<span>${esc(MTR_ZH[c] || "")}</span></div>`).join("") + `<div></div>`;

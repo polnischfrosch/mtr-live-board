@@ -144,7 +144,7 @@ export function buildMap(svg, onPick) {
     return up.indexOf(ids[0]) < up.indexOf(ids[ids.length - 1]) ? "UP" : "DOWN";
   }
 
-  /** Redraw the LEDs from the store. mode: "breathe" (trains on their way pulse) or "steady". */
+  /** Redraw the LEDs from the store. mode: "fade" (a train fades in as it nears the station) or "steady". */
   function update(store, now, mode) {
     const cache = {};
     let lit = 0;
@@ -160,11 +160,10 @@ export function buildMap(svg, onPick) {
       const c = r.cells[idx];
       const on = c === "on";
       if (on) lit++;
+      const level = !on ? 0 : mode === "fade" ? r.level[idx] : 1;
       led.die.setAttribute("fill", on ? led.col : c === "unknown" ? "#3a3d3f" : "#4a4a46");
-      led.glow.setAttribute("opacity", on ? 0.9 : 0);
-      const moving = on && !r.standing[idx] && mode === "breathe";
-      led.glow.classList.toggle("breathe", moving);
-      led.die.classList.toggle("breathe", moving);
+      led.die.setAttribute("opacity", on ? (0.25 + 0.75 * level).toFixed(2) : 1);
+      led.glow.setAttribute("opacity", (0.9 * level).toFixed(2));
     }
     return { lit, total: leds.length };
   }

@@ -119,10 +119,23 @@ function atTerminus(st, line, order, k, d, now) {
   return false;
 }
 
+/** How far a train heading to order[k] has come from the station before (0..1).
+ *  `u` = seconds until it arrives at order[k]. Uses the time it was due at the station
+ *  before, kept in the history; without history a 2-minute run is assumed. */
+function progress(st, line, order, k, d, now, u) {
+  const prev = trains(st, line, order[k - 1], d, now, HISTORY) || [];
+  let left = null;
+  for (const [t] of prev) if (t <= 0 && u - t >= MIN_RUN && (left === null || t > left)) left = t;
+  const run = left === null ? 120 : u - left;
+  return Math.min(1, Math.max(0, 1 - u / run));
+}
+
+export const FADE_MIN = 0.12;   // brightness of a train that has just left the station before
+
 /** Cells per station in list order: "on", "off" or "unknown". */
 export function stationLeds(st, line, d, now) {
   const order = travelOrder(st, line, d);
-  const cells = {}, standing = {};
+  const cells = {}, standing = {}, level = {};
   order.forEach((sta, k) => {
     const fut = trains(st, line, sta, d, now, GRACE);
     if (fut === null || (k && !st.arr.has(key(line, order[k - 1])))) cells[sta] = "unknown";
@@ -130,17 +143,25 @@ export function stationLeds(st, line, d, now) {
       const at = fut.length > 0 && fut[0][0] <= FIRST_LIT;       // waiting to depart
       cells[sta] = at ? "on" : "off";
       standing[sta] = at;
+      level[sta] = at ? 1 : 0;
     } else if (fut.length) {
       const at = Math.abs(fut[0][0]) <= GRACE;
-      cells[sta] = at || occupied(st, line, order, k, d, now) ? "on" : "off";
+      const on = at || occupied(st, line, order, k, d, now);
+      cells[sta] = on ? "on" : "off";
       standing[sta] = at;
-    } else cells[sta] = atTerminus(st, line, order, k, d, now) ? "on" : "off"; // no list: terminus
+      level[sta] = at ? 1 : on ? FADE_MIN + (1 - FADE_MIN) * progress(st, line, order, k, d, now, fut[0][0]) : 0;
+    } else {                                     // no list in this direction: terminus
+      const on = atTerminus(st, line, order, k, d, now);
+      cells[sta] = on ? "on" : "off";
+      level[sta] = on ? 1 : 0;
+    }
   });
   const codes = MTR_LINES[line].stations;
   const out = codes.map((s) => cells[s]);
   return {
     cells: out,
     standing: codes.map((s) => Boolean(standing[s])),   // true: at the platform, false: on its way
+    level: codes.map((s) => level[s] || 0),            // brightness for fading in: 0..1
     lit: out.filter((c) => c === "on").length,
     end: order[order.length - 1],
   };

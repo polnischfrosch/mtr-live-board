@@ -84,3 +84,22 @@ test("terminus lights while a train runs into it and stands there", () => {
   assert.equal(sunAt(400), "on", "standing at Sunny Bay");
   assert.ok(trains(st, "DRL", "DIS", "UP", T + 120e3, 900).length >= 1);
 });
+
+test("fade: a train on its way gets brighter until it reaches the station", () => {
+  const { st, now } = replay(ALL);
+  let checked = 0;
+  for (const line of ["ISL", "EAL", "TML"]) {
+    for (const d of ["UP", "DOWN"]) {
+      const a = stationLeds(st, line, d, now), b = stationLeds(st, line, d, now + 20000);
+      a.cells.forEach((c, i) => {
+        assert.ok(a.level[i] >= 0 && a.level[i] <= 1);
+        if (c === "on" && b.cells[i] === "on" && !a.standing[i] && !b.standing[i]) {
+          assert.ok(b.level[i] >= a.level[i] - 1e-9, `${line} ${d} ${i}: ${a.level[i]} -> ${b.level[i]}`);
+          checked++;
+        }
+        if (c === "off") assert.equal(a.level[i], 0);
+      });
+    }
+  }
+  assert.ok(checked > 10, `only ${checked} moving trains checked`);
+});

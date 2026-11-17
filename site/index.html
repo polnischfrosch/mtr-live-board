@@ -50,15 +50,16 @@
       <div class="status" id="map-status">Not started</div>
       <div class="actions">
         <select id="map-mode" class="btn" title="How LEDs show trains that are on their way">
-          <option value="breathe">Trains on their way breathe</option>
-          <option value="steady">All lit LEDs steady</option>
+          <option value="fade">Fade in as the train approaches</option>
+          <option value="steady">All lit LEDs full brightness</option>
         </select>
         <button id="map-start" class="btn primary">Start live</button>
         <button id="map-replay" class="btn">Replay recording</button>
       </div>
     </div>
     <p class="hint legend">Two LEDs per station, one per direction. MTR trains run on the left, so each LED sits on the
-      left of its direction of travel. Steady: a train is at the platform. Breathing: a train is on its way to the station.
+      left of its direction of travel. A train fades in from dim as it leaves the station before and reaches full
+      brightness at the platform.
       Click a station for its next trains.</p>
     <div class="map-wrap"><svg id="map-svg" role="img" aria-label="Map of the MTR network with two LEDs per station"></svg></div>
     <div class="panel map-info" id="map-info"><span class="hint">Click a station on the map.</span></div>

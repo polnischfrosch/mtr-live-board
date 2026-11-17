@@ -91,8 +91,7 @@ main { padding: 20px clamp(14px, 3vw, 32px) 60px; max-width: 1400px; margin: 0 a
 /* Map */
 .map-wrap { background: #0b0e11; border-radius: 14px; padding: 8px; }
 #map-svg { display: block; width: 100%; height: auto; }
-#map-svg .breathe { animation: breathe 2.4s ease-in-out infinite; }
-@keyframes breathe { 0%, 100% { opacity: 0.18; } 50% { opacity: 1; } }
+#map-svg .mglow { transition: opacity 0.9s linear; }
 .map-info { margin-top: 14px; }
 .map-info h2 .zh { color: var(--muted); font-weight: 500; margin-left: 6px; }
 .info-row { display: flex; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
