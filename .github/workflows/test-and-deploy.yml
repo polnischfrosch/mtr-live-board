@@ -1,0 +1,48 @@
+name: Test and deploy
+
+# On every push: run the logic tests. On main: then publish site/ to GitHub Pages.
+# Pull requests and other branches only run the tests.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Logic tests (recorded answers, no network)
+        run: npm test
+      - name: Python script still starts
+        run: python3 tools/mtr_live_test.py --help > /dev/null
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stamp the version
+        run: sed -i "s/web-[0-9a-z-]*\"/web-${GITHUB_SHA::7}\"/" site/js/net.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
