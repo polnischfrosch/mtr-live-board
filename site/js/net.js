@@ -18,6 +18,7 @@ function loadSettings() {
 }
 
 export const log = { started: new Date().toISOString(), requests: [], max: 1500 };
+const worked = new Set();
 export const stats = { n: 0, ok: 0, failed: 0, ms: [], http429: 0, blocked: 0 };
 
 export class FetchError extends Error {
@@ -43,9 +44,11 @@ export async function fetchJson(url, service, timeoutMs = 15000) {
       r = await fetch(target, { signal: ctl.signal, cache: "no-store" });
     } catch (e) {
       // A CORS refusal and being offline look the same from inside the page.
+      if (e.name === "AbortError") throw new FetchError("timed out");
+      // Once this service has answered, a later failure is a network hiccup, not CORS.
+      if (worked.has(service)) throw new FetchError("network error (retried automatically)");
       stats.blocked++;
-      throw new FetchError(e.name === "AbortError" ? "timed out"
-        : "no answer readable: blocked by the browser (CORS) or offline");
+      throw new FetchError("no answer readable: blocked by the browser (CORS) or offline");
     }
     rec.status = r.status;
     const body = await r.text();
@@ -57,6 +60,7 @@ export async function fetchJson(url, service, timeoutMs = 15000) {
     try { data = JSON.parse(body); } catch { throw new FetchError("answer is not JSON"); }
     rec.ok = true;
     stats.ok++;
+    worked.add(service);
     return data;
   } catch (e) {
     rec.ok = false;
