@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 tools/vvs_seq_probe.py
+      - run: python3 tools/vvs_seq.py
       - run: python3 tools/vvs_probe.py ${{ inputs.stops }}
         if: ${{ inputs.stops != 'none' }}
       - uses: actions/upload-artifact@v4
