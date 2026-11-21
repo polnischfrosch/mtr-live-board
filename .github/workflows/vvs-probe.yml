@@ -1,0 +1,25 @@
+name: VVS probe
+
+# Resolves the Stuttgart board's stops to VVS stop IDs and checks CORS. Run by hand.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 tools/vvs_probe.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vvs-probe
+          path: vvs_probe.json
+          retention-days: 14
