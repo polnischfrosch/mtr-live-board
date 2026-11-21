@@ -19,12 +19,12 @@ UA = {"User-Agent": "mtr-live-board-probe/1.0", "Accept": "application/json"}
 STOPS = {
     "DAI": "de:08111:323", "MUE": "de:08111:281", "OEP": "de:08111:6020", "VOG": "de:08111:43",
     "VAI": "de:08111:6002",
-    "WLH": "Stuttgart Wilhelma", "ROS": "Stuttgart Rosensteinbrücke", "WIL": "Stuttgart Wilhelmsplatz",
-    "MIN": "Stuttgart Mineralbäder", "STO": "Stuttgart Stöckach", "NEC": "Stuttgart Neckartor",
-    "STA": "Stuttgart Staatsgalerie", "HBF": "Stuttgart Hauptbahnhof (Arnulf-Klett-Platz)",
-    "BOE": "Stuttgart Börsenplatz", "BER": "Stuttgart Berliner Platz (Liederhalle)",
-    "RBP": "Stuttgart Rotebühlplatz (Stadtmitte)", "RAT": "Stuttgart Rathaus", "CHA": "Stuttgart Charlottenplatz",
-    "MAR": "Stuttgart Marienplatz", "ESP": "Stuttgart Erwin-Schoettle-Platz", "BIH": "Stuttgart Bihlplatz",
+    "WLH": "de:08111:254", "ROS": "de:08111:6253", "WIL": "Wilhelmsplatz Bad Cannstatt",
+    "MIN": "de:08111:28", "STO": "de:08111:26", "NEC": "de:08111:25",
+    "STA": "de:08111:6024", "HBF": "de:08111:6112",
+    "BOE": "de:08111:229", "BER": "de:08111:6073",
+    "RBP": "de:08111:6056", "RAT": "de:08111:6074", "CHA": "de:08111:6075",
+    "MAR": "de:08111:6019", "ESP": "de:08111:6017", "BIH": "Stuttgart Bihlplatz",
     "SUE": "Stuttgart Südheimer Platz", "WAL": "Stuttgart Waldeck", "KAL": "Stuttgart Kaltental",
     "ENG": "Stuttgart Engelboldstraße", "VIA": "Stuttgart Vaihinger Viadukt", "FAU": "Stuttgart Fauststraße",
     "SCH": "Stuttgart Vaihingen Schillerplatz", "RSS": "Stuttgart Rudolf-Sophien-Stift",
@@ -73,7 +73,10 @@ def main():
         out["cors"]["mtr"] = str(e)
     print("CORS headers:", json.dumps(out["cors"], indent=1))
 
+    only = set(sys.argv[1:])
     for key, text in STOPS.items():
+        if only and key not in only:
+            continue
         rec = {"query": text}
         try:
             if text.startswith("de:"):
@@ -97,10 +100,11 @@ def main():
                 rec["lines"] = {k: v[:3] for k, v in sorted(seen.items())}
         except Exception as e:  # noqa: BLE001
             rec["error"] = f"{type(e).__name__}: {e}"
+            time.sleep(20)          # VVS refuses connections after a burst: back off
         out["stops"][key] = rec
         print(f"{key:<4} {rec.get('id')!s:<16} {rec.get('name')!s:<45} {', '.join(rec.get('lines', {}).keys())[:160]}"
               + (f"  ERROR {rec['error']}" if rec.get("error") else ""))
-        time.sleep(0.3)
+        time.sleep(3)              # gentle: VVS blocked a faster run
     with open("vvs_probe.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
 
