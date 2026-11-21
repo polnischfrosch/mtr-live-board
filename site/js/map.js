@@ -78,7 +78,7 @@ export function buildMap(svg, cfg, onPick) {
     const fwd = offsetLine(centre, leftHand ? -TRACK : TRACK);     // running side of travel in point order
     const back = offsetLine(centre, leftHand ? TRACK : -TRACK);
     const code = L.name;
-    const known = new Set(cfg.lines[code].stations);
+    const known = new Set(L.ghost ? [] : cfg.lines[code].stations);
     const stations = P.map((p, i) => ({ p, i })).filter(({ p }) => !p.via);
     return { ...L, code, P, centre, fwd, back, known, stations };
   });
@@ -86,6 +86,15 @@ export function buildMap(svg, cfg, onPick) {
   // tracks: two thin lines per drawn line
   const tracks = el("g", {}, svg);
   for (const L of lines) {
+    if (L.ghost) {           // a stretch in between: dashed, no stops
+      el("polyline", { points: L.centre.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "), fill: "none", stroke: L.col,
+        "stroke-width": 2, "stroke-dasharray": "5 6", "stroke-linecap": "round", opacity: 0.6 }, tracks);
+      if (L.label) {           // [text, x, y, anchor]
+        const [text, x, y, anchor] = L.label;
+        silk(x, y, text, { "font-size": 9.5, opacity: 0.7, fill: L.col, "text-anchor": anchor || "start" }, svg);
+      }
+      continue;
+    }
     for (const rail of [L.fwd, L.back]) {
       el("polyline", {
         points: rail.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "), fill: "none", stroke: L.col,
@@ -98,7 +107,7 @@ export function buildMap(svg, cfg, onPick) {
   for (const L of lines) {
     L.P.forEach((p, i) => {
       if (!p.stub) return;
-      const prev = L.centre[Math.max(0, i - 1)], q = L.centre[i];
+      const prev = i === 0 ? L.centre[1] : L.centre[i - 1], q = L.centre[i];   // points away from the board
       const dx = q.x - prev.x, dy = q.y - prev.y, len = Math.hypot(dx, dy) || 1;
       silk(q.x + (dx / len) * 8, q.y + (dy / len) * 8 + 4, p.stub, { "font-size": 10, opacity: 0.75, "text-anchor": dx < -1 ? "end" : dx > 1 ? "start" : "middle", fill: L.col }, svg);
     });
@@ -147,9 +156,11 @@ export function buildMap(svg, cfg, onPick) {
         for (const rail of [L.fwd, L.back]) addLed(rail[i], L, p.id, null, true);
         continue;
       }
-      if (L.branch) continue;   // the shared station is drawn by the main line
-      addLed(L.fwd[i], L, p.id, "fwd");
-      addLed(L.back[i], L, p.id, "back");
+      if (L.branch || L.ghost) continue;   // the shared station is drawn by the main line
+      for (const side of ["fwd", "back"]) {
+        if (cfg.hasLed && !cfg.hasLed(L.code, p.id, side)) continue;   // boards with LEDs only where they matter
+        addLed(side === "fwd" ? L.fwd[i] : L.back[i], L, p.id, side);
+      }
     }
   }
   function addLed(q, L, id, side, dead = false) {
@@ -163,7 +174,7 @@ export function buildMap(svg, cfg, onPick) {
   // which MTR direction runs along the drawn point order, per line (needs data: DRL is flipped)
   function forwardDir(store, code, pts) {
     const ids = pts.filter((p) => !p.via && cfg.lines[code].stations.includes(p.id)).map((p) => p.id);
-    const up = travelOrder(store, code, "UP");
+    const up = (cfg.travelOrder || travelOrder)(store, code, "UP");
     return up.indexOf(ids[0]) < up.indexOf(ids[ids.length - 1]) ? "UP" : "DOWN";
   }
 
@@ -176,7 +187,8 @@ export function buildMap(svg, cfg, onPick) {
       if (!cache[k]) {
         const f = forwardDir(store, led.code, led.pts);
         const b = f === "UP" ? "DOWN" : "UP";
-        cache[k] = { fwd: stationLeds(store, led.code, f, now), back: stationLeds(store, led.code, b, now) };
+        const leds = cfg.stationLeds || stationLeds;
+        cache[k] = { fwd: leds(store, led.code, f, now), back: leds(store, led.code, b, now) };
       }
       const r = cache[k][led.side];
       const idx = cfg.lines[led.code].stations.indexOf(led.id);

@@ -1,111 +1,88 @@
-// Stuttgart board: layout (from the commute board design, REV E, 200 x 133 mm) and network.
-// ST: id -> [x, y, name, label dx, dy, anchor ("none" = unlabelled stop), bold, font size]
-// Stop IDs were looked up with tools/vvs_probe.py; stop order was checked against live departure times.
+// Stuttgart board, reduced version: only the trains that matter for getting on.
+// Boarding stops: Österreichischer Platz (U1, U14), Mühlsteg (U14), Daimlerplatz (U2).
+// For each, the last two stops before it are shown, from both sides. A train lights the stop it is
+// heading to (or standing at) on that stretch, and goes dark once it has left the boarding stop.
+//
+// Stop IDs, stop order and run times come from the VVS journey planner (tools/vvs_seq.py, 21 Nov 2026).
+// ST: id -> [x, y, name, label dx, dy, anchor, bold, font size]   ("|" splits a label)
 
 export const ST = {
-  // Bad Cannstatt and the centre
-  DAI: [905, 118, "Daimlerplatz", -18, -22, "start", 1, 13],
-  WLH: [850, 151, "Wilhelma", -6, 4, "end", 0, 11],
-  ROS: [850, 117, "Rosensteinbrücke", -6, 4, "end", 0, 11],
-  MUE: [850, 83, "Mühlsteg", -6, 4, "end", 1, 13],
-  WIL: [905, 185, "Wilhelmsplatz|Bad Cannstatt", 20, 46, "middle", 1, 12],
-  MIN: [850, 185, "Mineralbäder", 10, 47, "end", 0, 11],
-  STO: [795, 185, "Stöckach", -34, 4, "end", 0, 12],
-  NEC: [750, 230, "Neckartor", 24, 26, "start", 0, 12],
-  STA: [705, 275, "Staatsgalerie", 30, 10, "start", 0, 12],
-  HBF: [610, 250, "Hauptbahnhof", 0, -30, "middle", 1, 12],
-  BOE: [575, 285, "Börsenplatz", -22, -4, "end", 1, 12],
-  BER: [540, 320, "Berliner Platz", -26, 5, "end", 0, 12],
-  RBP: [540, 380, "Rotebühlplatz", -26, 26, "end", 0, 12],
-  RAT: [600, 380, "Rathaus", 22, 24, "start", 0, 12],
-  CHA: [665, 315, "Charlottenplatz", 26, 10, "start", 0, 12],
-  OEP: [540, 440, "Österreichischer Platz", 30, 17, "start", 1, 13],
-  // Süd and Heslach
-  MAR: [500, 480, "Marienplatz", 24, 14, "start", 0, 12],
-  ESP: [460, 520, "Erwin-Schoettle-Platz", 24, 14, "start", 0, 12],
-  BIH: [420, 560, "Bihlplatz", 10, 42, "middle", 0, 11],
-  SUE: [370, 560, "Südheimer Platz", 8, -34, "middle", 0, 11],
-  VOG: [320, 560, "Heslach Vogelrain", 0, 42, "middle", 1, 13],
-  // U14 to Vaihingen
-  WAL: [260, 560, "Waldeck", 0, -10, "middle", 0, 11],
-  KAL: [200, 560, "Kaltental", 0, 42, "middle", 0, 11],
-  ENG: [160, 520, "Engelboldstraße", 22, -8, "start", 0, 11],
-  VIA: [120, 480, "Vaihingen Viadukt", 18, 4, "start", 0, 11],
-  FAU: [120, 430, "Fauststraße", 18, 4, "start", 0, 11],
-  SCH: [120, 380, "Vaihingen Schillerplatz", 18, 4, "start", 0, 11],
-  VAI: [120, 330, "Vaihingen", 32, 5, "start", 1, 13],
-  // bus 92 Vogelrain -> MPI
-  RSS: [320, 490, "Rudolf-Sophien-Stift", 0, 0, "none", 0, 12],
-  UNI: [320, 420, "Universität", 18, 4, "start", 0, 12],
-  SCR: [320, 350, "Schranne", 0, 0, "none", 0, 12],
-  NOB: [320, 280, "Nobelstraße", 0, 0, "none", 0, 12],
-  LAU: [260, 220, "Lauchhau", 28, 6, "start", 0, 11],
-  MPI: [210, 170, "Max-Planck-Institute", 20, 2, "start", 1, 12],
-  // bus 81 Vaihingen -> MPI (minor stops unlabelled)
-  SGA: [120, 290, "Schwabengalerie", 0, 0, "none", 0, 12],
-  KRE: [120, 250, "Krehlstraße", 0, 0, "none", 0, 12],
-  HEE: [150, 220, "Heerstraße", 0, 0, "none", 0, 12],
-  KAT: [185, 220, "Katzenbachstraße", 0, 0, "none", 0, 12],
-  AFE: [222, 220, "Am Feldrand", 0, 0, "none", 0, 12]
+  // Österreichischer Platz and its approaches
+  ESP: [150, 560, "Erwin-Schoettle-Platz", 30, 22, "start", 0, 12],
+  MAR: [235, 475, "Marienplatz", 30, 22, "start", 0, 12],
+  OEP: [320, 390, "Österreichischer Platz", -34, 4, "end", 1, 14],
+  RBP: [320, 290, "Rotebühlplatz", -30, 4, "end", 0, 12],
+  BHS: [320, 190, "Berliner Platz|(Hohe Straße)", -30, -2, "end", 0, 12],
+  RAT: [420, 320, "Rathaus", 24, 16, "start", 0, 12],
+  CHA: [520, 250, "Charlottenplatz", -24, -16, "end", 0, 12],
+  // Mühlsteg
+  WLH: [650, 470, "Wilhelma", 28, 4, "start", 0, 12],
+  ROS: [650, 380, "Rosensteinbrücke", 28, 4, "start", 0, 12],
+  MUE: [650, 290, "Mühlsteg", 30, 4, "start", 1, 14],
+  KWM: [650, 200, "Kraftwerk Münster", 28, 4, "start", 0, 12],
+  MVI: [650, 110, "Münster Viadukt", -28, 4, "end", 0, 12],
+  // Daimlerplatz
+  MER: [790, 560, "Mercedesstraße", 26, 6, "start", 0, 12],
+  WIL: [850, 470, "Wilhelmsplatz|Bad Cannstatt", 28, 0, "start", 0, 12],
+  DAI: [850, 380, "Daimlerplatz", 30, 4, "start", 1, 14],
+  KUR: [850, 290, "Kursaal", 28, 4, "start", 0, 12],
+  GNE: [850, 200, "Gnesener Straße", 28, 4, "start", 0, 12],
 };
 
+// Drawn lines. `ghost` lines are the stretches in between: dashed, no stops, no LEDs.
 export const LINES = [
-  { name: "U1", col: "#c99a68", off: -12,
-    pts: ["VOG", "SUE", "BIH", "ESP", "MAR", "OEP", "RBP", "BER", "BOE", "HBF", { x: 680, y: 250 }, "STA", "NEC", "STO", "MIN", "WIL", { stub: "Fellbach", x: 960, y: 185 }] },
-  { name: "U14", col: "#84c441", off: 12,
-    pts: ["VAI", "SCH", "FAU", "VIA", "ENG", "KAL", "WAL", "VOG", "SUE", "BIH", "ESP", "MAR", "OEP", "RAT", "CHA", "STA", "NEC", "STO", "MIN", "WLH", "ROS", "MUE", { stub: "Mühlhausen", x: 850, y: 50 }] },
-  { name: "U2", col: "#f39a24", off: 0,
-    pts: [{ stub: "Botnang", x: 470, y: 380 }, "RBP", "RAT", "CHA", "STA", "NEC", "STO", "MIN", "WIL", "DAI", { stub: "Neugereut", x: 960, y: 118 }] },
-  { name: "92", col: "#00b9f2", off: -7,
-    pts: ["VOG", "RSS", "UNI", "SCR", "NOB", "LAU", "MPI", { stub: "Leonberg", x: 172, y: 132 }] },
-  { name: "81", col: "#c47ad6", off: 7,
-    pts: ["VAI", "SGA", "KRE", "HEE", "KAT", "AFE", "LAU", "MPI", { stub: "Büsnau", x: 172, y: 132 }] },
+  { name: "U1", col: "#c99a68", off: -12, pts: [{ stub: "Heslach", x: 100, y: 610 }, "ESP", "MAR", "OEP", "RBP", "BHS", { stub: "Hauptbahnhof", x: 320, y: 115 }] },
+  { name: "U14", col: "#84c441", off: 12, pts: [{ x: 100, y: 610 }, "ESP", "MAR", "OEP", "RAT", "CHA"] },
+  { name: "U14", col: "#84c441", off: 0, ghost: true, label: ["Staatsgalerie · Mineralbäder", 585, 590, "start"],
+    pts: [{ x: 520, y: 250 }, { x: 570, y: 250 }, { x: 570, y: 560 }, { x: 650, y: 560 }] },
+  { name: "U14", col: "#84c441", off: 0, pts: [{ x: 650, y: 560 }, "WLH", "ROS", "MUE", "KWM", "MVI", { stub: "Mühlhausen", x: 650, y: 45 }] },
+  { name: "U2", col: "#f39a24", off: 0, ghost: true, label: ["Stadtmitte · Mineralbäder", 880, 625, "start"], pts: [{ x: 720, y: 640 }, { x: 790, y: 560 }] },
+  { name: "U2", col: "#f39a24", off: 0, pts: [{ x: 750, y: 600 }, "MER", "WIL", "DAI", "KUR", "GNE", { stub: "Neugereut", x: 850, y: 150 }] },
 ];
 
-// VVS stop IDs (de:08111 = Stuttgart)
+// VVS stop IDs (de:08111 = Stuttgart). Only the boarding stops are asked; the others are for reference.
 export const STOP_ID = {
-  DAI: "de:08111:323", WLH: "de:08111:254", ROS: "de:08111:6253", MUE: "de:08111:281", WIL: "de:08111:6332",
-  MIN: "de:08111:28", STO: "de:08111:26", NEC: "de:08111:25", STA: "de:08111:6024", HBF: "de:08111:6112",
-  BOE: "de:08111:229", BER: "de:08111:6073", RBP: "de:08111:6056", RAT: "de:08111:6074", CHA: "de:08111:6075",
-  OEP: "de:08111:6020", MAR: "de:08111:6019", ESP: "de:08111:6017", BIH: "de:08111:15", SUE: "de:08111:13",
-  VOG: "de:08111:43", WAL: "de:08111:6010", KAL: "de:08111:6009", ENG: "de:08111:8", VIA: "de:08111:6",
-  FAU: "de:08111:5", SCH: "de:08111:6004", VAI: "de:08111:6002", RSS: "de:08111:2209", UNI: "de:08111:6008",
-  SCR: "de:08111:2603", NOB: "de:08111:6018", LAU: "de:08111:2591", MPI: "de:08111:2589", SGA: "de:08111:6729",
-  KRE: "de:08111:6201", HEE: "de:08111:2593", KAT: "de:08111:6011", AFE: "de:08111:2592",
+  OEP: "de:08111:6020", MUE: "de:08111:281", DAI: "de:08111:323",
+  ESP: "de:08111:6017", MAR: "de:08111:6019", RBP: "de:08111:6056", BHS: "de:08111:55", RAT: "de:08111:6074",
+  CHA: "de:08111:6075", WLH: "de:08111:254", ROS: "de:08111:6253", KWM: "de:08111:280", MVI: "de:08111:278",
+  MER: "de:08111:30", WIL: "de:08111:6332", KUR: "de:08111:322", GNE: "de:08111:321",
 };
 
-// Lines for core.js: stations in order. UP runs towards the end of the list (Cannstatt, or the MPI for buses).
-// up / down: which destinations belong to which direction. Others are ignored (shown in Debug).
+// Lines: stations in drawing order, UP = towards the end of the list (north / Cannstatt / Neugereut).
+// up / down: which destinations belong to which direction; anything else is listed on the Debug tab.
 export const ST_LINES = {
-  U1: { name: "U1", color: "#c99a68", stations: ["VOG", "SUE", "BIH", "ESP", "MAR", "OEP", "RBP", "BER", "BOE", "HBF", "STA", "NEC", "STO", "MIN", "WIL"],
+  U1: { name: "U1", color: "#c99a68", stations: ["ESP", "MAR", "OEP", "RBP", "BHS"],
     up: /Fellbach|Mühlhausen|Cannstatt|Wilhelmsplatz/, down: /Vogelrain|Vaihingen|Heslach|Südheimer/ },
-  U14: { name: "U14", color: "#84c441", stations: ["VAI", "SCH", "FAU", "VIA", "ENG", "KAL", "WAL", "VOG", "SUE", "BIH", "ESP", "MAR", "OEP", "RAT", "CHA", "STA", "NEC", "STO", "MIN", "WLH", "ROS", "MUE"],
+  U14: { name: "U14", color: "#84c441", stations: ["ESP", "MAR", "OEP", "RAT", "CHA", "WLH", "ROS", "MUE", "KWM", "MVI"],
     up: /Mühlhausen|Remseck|Wilhelma|Mühlsteg/, down: /Vaihingen|Heslach|Vogelrain/ },
-  U2: { name: "U2", color: "#f39a24", stations: ["RBP", "RAT", "CHA", "STA", "NEC", "STO", "MIN", "WIL", "DAI"],
+  U2: { name: "U2", color: "#f39a24", stations: ["MER", "WIL", "DAI", "KUR", "GNE"],
     up: /Neugereut|Cannstatt|Mühlhausen/, down: /Botnang|Hölderlinplatz|Berliner|Vogelsang/ },
-  92: { name: "92", color: "#00b9f2", stations: ["VOG", "RSS", "UNI", "SCR", "NOB", "LAU", "MPI"],
-    up: /^Leonberg/, down: /^Heslach Vogelrain$/ },
-  81: { name: "81", color: "#c47ad6", stations: ["VAI", "SGA", "KRE", "HEE", "KAT", "AFE", "LAU", "MPI"],
-    up: /Büsnau/, down: /Dürrlewang|Vaihingen|Rohr/ },
 };
 
-/** Destination names that are stops on the board, so trains ending there are not looked for beyond. */
-export const DEST_STOP = { "Heslach Vogelrain": "VOG", "Vaihingen Bahnhof": "VAI" };
+// The stretches into each boarding stop. chain: the two stops before it and the stop itself, in
+// travel order. run: planned seconds between them; enter: planned seconds from the stop before the
+// chain to its first stop (a train lights the first stop once it has left that one).
+export const APPROACH = [
+  { line: "U1", dir: "UP", stop: "OEP", chain: ["ESP", "MAR", "OEP"], run: [78, 108], enter: 90 },
+  { line: "U1", dir: "DOWN", stop: "OEP", chain: ["BHS", "RBP", "OEP"], run: [66, 144], enter: 60 },
+  { line: "U14", dir: "UP", stop: "OEP", chain: ["ESP", "MAR", "OEP"], run: [78, 108], enter: 90 },
+  { line: "U14", dir: "DOWN", stop: "OEP", chain: ["CHA", "RAT", "OEP"], run: [60, 90], enter: 90 },
+  { line: "U14", dir: "UP", stop: "MUE", chain: ["WLH", "ROS", "MUE"], run: [114, 54], enter: 126 },
+  { line: "U14", dir: "DOWN", stop: "MUE", chain: ["MVI", "KWM", "MUE"], run: [72, 54], enter: 78 },
+  { line: "U2", dir: "UP", stop: "DAI", chain: ["MER", "WIL", "DAI"], run: [96, 60], enter: 84 },
+  { line: "U2", dir: "DOWN", stop: "DAI", chain: ["GNE", "KUR", "DAI"], run: [108, 72], enter: 90 },
+];
 
-export const ST_NET = {
-  lines: ST_LINES,
-  maxRun: {},
-  defaultMaxRun: 600,                 // s: bus 92 runs about hourly at weekends, stops are 1-3 min apart
-  endRun: { 92: 120, U1: 120, U14: 150 },
-  branch: { "U1>Mühlhausen": "MIN" }, // evening U1 to Mühlhausen leaves the drawn U1 after Mineralbäder
-};
+/** Does this stop have an LED for this line and side? (fwd = UP for every drawn line here) */
+export function hasLed(line, sta, side) {
+  const dir = side === "fwd" ? "UP" : "DOWN";
+  return APPROACH.some((a) => a.line === line && a.dir === dir && a.chain.includes(sta));
+}
 
 /** Config for map.js. Stadtbahn runs on the right. */
 export const ST_MAP = {
-  ST, LINES, lines: ST_LINES, width: 1020, height: 680,
-  title: [["STUTTGART LIVE", 30, 1], ["U1 · U14 · U2 · BUS 92 · 81", 11, 1], ["RIGHT-HAND RUNNING: LED ON THE RIGHT OF TRAVEL", 8.5, 0.6]],
-  titleX: 985, titleY: 556, side: "right", spread: 1.5, track: 6,
-  // label positions changed from the 1-LED board, where the wider capsules made labels collide
-  labels: { WLH: [-16, 4, "end"], ROS: [-12, 4, "end"], MUE: [-12, 4, "end"], LAU: [0, 26, "middle"], SUE: [0, -38, "middle"] },
+  ST, LINES, lines: ST_LINES, width: 1020, height: 680, hasLed,
+  title: [["STUTTGART LIVE", 30, 1], ["GETTING ON · U1 · U14 · U2", 11, 1], ["LAST TWO STOPS BEFORE EACH BOARDING STOP", 8.5, 0.6]],
+  titleX: 985, titleY: 72, side: "right", spread: 1.5, track: 6,
   holes: [[44, 40], [1006, 40], [44, 650], [1006, 650]],
 };

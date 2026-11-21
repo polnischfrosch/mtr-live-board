@@ -14,12 +14,12 @@
     <span class="led on"></span>
     <div>
       <h1>Stuttgart Live Board</h1>
-      <p class="sub">Test bench for the Stuttgart LED board (U1, U14, U2, bus 92 and 81), from the VVS departure monitor</p>
+      <p class="sub">Test bench for the Stuttgart LED board: trains into Österreichischer Platz, Mühlsteg and Daimlerplatz, from the VVS departure monitor</p>
     </div>
   </div>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="map" class="active">Map</button>
-    <button role="tab" data-tab="lines">Lines</button>
+    <button role="tab" data-tab="stops">Boarding stops</button>
     <button role="tab" data-tab="debug">Debug</button>
   </nav>
 </header>
@@ -36,22 +36,16 @@
         <button id="st-start" class="btn primary">Pause</button>
       </div>
     </div>
-    <p class="hint legend">Two LEDs per stop, one per direction. Stadtbahn and buses run on the right, so each LED sits on
-      the right of its direction of travel. A train or bus fades in as it leaves the stop before and is at full brightness at
-      the platform. Stops load one by one (VVS limits requests), so the map fills in over about two minutes.
-      Click a stop for its departures.</p>
-    <div class="map-wrap"><svg id="map-svg" role="img" aria-label="Map of U1, U14, U2 and buses 92 and 81 with two LEDs per stop"></svg></div>
+    <p class="hint legend">Only the last two stops before each boarding stop, from both sides. A train lights the stop it is
+      heading to, fades in as it leaves the stop before and is at full brightness at the platform. It goes dark once it has
+      left the boarding stop. LEDs sit on the right of the direction of travel, like the trains. Click a stop for the next trains.</p>
+    <div class="map-wrap"><svg id="map-svg" role="img" aria-label="Map of the approaches to Österreichischer Platz, Mühlsteg and Daimlerplatz"></svg></div>
     <div class="panel map-info" id="map-info"><span class="hint">Click a stop on the map.</span></div>
   </section>
 
-  <section id="tab-lines" class="tab">
-    <div class="bar"><div class="status" id="lines-status"></div></div>
-    <p class="hint legend">
-      <span class="led on mini"></span> a train is heading to or standing at the stop
-      <span class="led off mini"></span> off
-      <span class="led unknown mini"></span> no data yet
-    </p>
-    <div id="lines-board" class="hk-board"></div>
+  <section id="tab-stops" class="tab">
+    <div class="bar"><div class="status" id="stops-status"></div></div>
+    <div id="stops-board" class="stops-grid"></div>
   </section>
 
   <section id="tab-debug" class="tab">

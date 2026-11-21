@@ -4,7 +4,7 @@ Test benches for two LED map boards, two LEDs per station (one per direction), l
 heading to or standing at the station. Live data, worked out with the same logic the boards' ESP32 will use.
 
 - **Hong Kong** (all 10 MTR lines, 236 LEDs) from the MTR Next Train API
-- **Stuttgart** (U1, U14, U2, bus 92 and 81, 122 LEDs) from the VVS departure monitor
+- **Stuttgart** (getting on: U1, U14 and U2 into Österreichischer Platz, Mühlsteg and Daimlerplatz, 24 LEDs) from the VVS departure monitor
 
 **Live page:** https://polnischfrosch.github.io/mtr-live-board/ (start screen, pick a map)
 
@@ -13,12 +13,12 @@ heading to or standing at the station. Live data, worked out with the same logic
 | `site/` | The pages (GitHub Pages): start screen, `hk/`, `stuttgart/`. Plain HTML and JavaScript, no build step. |
 | `site/js/core.js` | Station LEDs from predicted arrival times, for any network (shared by both boards and the tests) |
 | `site/js/mtr.js`, `site/js/mtr-data.js` | Hong Kong: API answers, lines, English and Chinese names |
-| `site/js/vvs.js`, `site/js/stuttgart-data.js` | Stuttgart: API answers, directions, stop IDs, layout |
+| `site/js/vvs.js`, `site/js/vvs-trips.js`, `site/js/stuttgart-data.js` | Stuttgart: API answers, trains by trip ID, stops, run times, layout |
 | `site/js/map.js` | The PCB map drawing, used by both boards |
 | `site/data/mtr-sample.json` | Recorded answers (17 Nov 2026, 15:56 HK), for Replay and the tests |
 | `tests/` | Logic tests (`npm test`) |
 | `tools/mtr_live_test.py` | Command-line live test for Hong Kong (Python 3, no extra packages) |
-| `tools/vvs_probe.py` | Looks up VVS stop IDs and lines per stop (workflow *VVS probe*, run by hand) |
+| `tools/vvs_probe.py`, `tools/vvs_seq.py` | VVS stop IDs, lines per stop, stop order and run times (workflow *VVS probe*, run by hand) |
 | `worker/` | Optional CORS proxy, only if the page says "blocked" |
 | `.github/workflows/` | Tests and deploy on every push; daily live API check |
 
@@ -36,11 +36,16 @@ The debug file is kept under the run's *Artifacts* for 14 days. It does not bloc
 
 ## Stuttgart notes
 
-- One request per stop returns every line's next 40 departures. Each line's departures are sorted into
-  its two directions by destination (`up` / `down` in `stuttgart-data.js`); anything else is listed on the Debug tab.
-- VVS refuses connections after about 20 requests a minute from one address, so the page asks for one
-  stop every 3.5 s and the map fills in over about two minutes. The board firmware has the same limit.
+- Reduced board: only the last two stops before each boarding stop (Österreichischer Platz, Mühlsteg,
+  Daimlerplatz), from both sides. A train goes dark once it has left the boarding stop.
+- Only the three boarding stops are asked. Every departure carries a VVS trip ID, so each train is
+  followed exactly; its position on the approach is its departure at the boarding stop (planned + live
+  delay) minus the planned run times back (`APPROACH` in `stuttgart-data.js`, from the VVS journey planner).
+- VVS refuses bursts from one address, so the page asks one stop every 3.5 s: each boarding stop
+  is refreshed about every 10 s.
 - VVS allows browsers to read its answers (CORS `*`), so no proxy is needed.
+- `tools/vvs_probe.py` and `tools/vvs_seq.py` (workflow *VVS probe*) look up stop IDs, lines per stop,
+  stop order and run times.
 
 ## How the LEDs are worked out
 

@@ -135,3 +135,9 @@ table.log { border-collapse: collapse; width: 100%; font-size: 12.5px; }
 .foot-note { margin-top: 28px; }
 .foot-note a { color: inherit; }
 .info-row.other { opacity: 0.45; }
+
+/* Stuttgart boarding stops */
+.stops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.approach { margin: 10px 0 4px; }
+.approach-head { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; margin-bottom: 2px; }
+.map-info h3 { font-size: 14px; margin: 12px 0 0; }
