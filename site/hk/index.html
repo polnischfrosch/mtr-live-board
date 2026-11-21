@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTR Live Board - 港鐵實時列車</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23f5b400'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <a class="home" href="../" title="Choose a map">←</a>
+    <span class="led on"></span>
+    <div>
+      <h1>MTR Live Board <span class="zh">港鐵實時列車</span></h1>
+      <p class="sub">Test bench for the Hong Kong MTR station LED board, from the MTR Next Train API</p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="hongkong" class="active">Live board</button>
+    <button role="tab" data-tab="map">Map</button>
+    <button role="tab" data-tab="debug">Debug</button>
+    <button role="tab" data-tab="settings">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ HONG KONG ============ -->
+  <section id="tab-hongkong" class="tab active">
+    <div class="bar">
+      <div class="status" id="hk-status">Not started</div>
+      <div class="actions">
+        <button id="hk-start" class="btn primary">Start live</button>
+        <button id="hk-replay" class="btn" title="Plays back answers recorded on 17 Nov 2026, 15:56 Hong Kong time">Replay recording</button>
+      </div>
+    </div>
+    <div class="chips" id="hk-lines"></div>
+    <p class="hint legend">
+      <span class="led on mini"></span> a train is heading to or standing at the station (LED on)
+      <span class="led off mini"></span> off
+      <span class="led unknown mini"></span> no data yet
+    </p>
+    <div id="hk-board" class="hk-board"></div>
+    <div class="foot" id="hk-stats"></div>
+  </section>
+
+  <!-- ============ MAP ============ -->
+  <section id="tab-map" class="tab">
+    <div class="bar">
+      <div class="status" id="map-status">Not started</div>
+      <div class="actions">
+        <select id="map-mode" class="btn" title="How LEDs show trains that are on their way">
+          <option value="fade">Fade in as the train approaches</option>
+          <option value="steady">All lit LEDs full brightness</option>
+        </select>
+        <button id="map-start" class="btn primary">Start live</button>
+        <button id="map-replay" class="btn">Replay recording</button>
+      </div>
+    </div>
+    <p class="hint legend">Two LEDs per station, one per direction. MTR trains run on the left, so each LED sits on the
+      left of its direction of travel. A train fades in from dim as it leaves the station before and reaches full
+      brightness at the platform.
+      Click a station for its next trains.</p>
+    <div class="map-wrap"><svg id="map-svg" role="img" aria-label="Map of the MTR network with two LEDs per station"></svg></div>
+    <div class="panel map-info" id="map-info"><span class="hint">Click a station on the map.</span></div>
+  </section>
+
+  <!-- ============ DEBUG ============ -->
+  <section id="tab-debug" class="tab">
+    <div class="bar">
+      <div class="status" id="dbg-summary"></div>
+      <div class="actions">
+        <button id="dbg-download" class="btn primary">Download debug file</button>
+        <button id="dbg-clear" class="btn">Clear log</button>
+      </div>
+    </div>
+    <p class="hint">Every request this page made, newest first. The debug file has the same shape as the one from
+      <code>mtr_live_test.py</code>, so it can be checked the same way. It contains no location or personal data.</p>
+    <div class="table-wrap"><table class="log">
+      <thead><tr><th>Time</th><th>Via</th><th>Status</th><th>ms</th><th>Request</th><th>Error</th></tr></thead>
+      <tbody id="dbg-rows"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="tab-settings" class="tab">
+    <div class="panel">
+      <h2>Connection</h2>
+      <p>The page asks MTR directly from your browser. A browser only lets the page read the answer if the
+        service allows it (CORS). If the test below says <em>blocked</em>, put the address of your proxy here
+        (a free Cloudflare Worker, see <code>worker/README.md</code> in the repository) and tick the box.</p>
+      <label class="field">Proxy address
+        <input id="set-proxy" type="url" placeholder="https://mtr-proxy.yourname.workers.dev" spellcheck="false">
+      </label>
+      <div class="row">
+        <label><input type="checkbox" id="set-proxy-mtr"> use the proxy</label>
+      </div>
+      <label class="field small">Requests at the same time
+        <select id="set-workers"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      </label>
+      <div class="row">
+        <button id="set-save" class="btn primary">Save</button>
+        <button id="set-test" class="btn">Test connection</button>
+      </div>
+      <pre id="set-result" class="result"></pre>
+    </div>
+    <div class="panel">
+      <h2>About</h2>
+      <p id="about-version"></p>
+      <p>Same logic as the board firmware: station LEDs worked out from MTR arrival times. The logic lives in
+        <code>site/js/mtr.js</code> and is tested on every push against recorded answers.</p>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="../js/hk-app.js"></script>
+</body>
+</html>

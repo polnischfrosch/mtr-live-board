@@ -2,6 +2,8 @@
 // ST: id -> [x, y, English name, label dx, dy, anchor, bold, font size]   ("|" splits a label)
 // MAP_LINES: drawn lines; `pts` are station ids or via points; `off` shifts a line sideways where
 // lines share a corridor. Board drawing area: 1470 x 980 units = 300 x 200 mm (4.9 units per mm).
+import { MTR_LINES, MTR_ZH } from "./mtr-data.js";
+
 export const ST = {
   // Island Line, y 830
   KET: [190, 830, "Kennedy Town", 0, 40, "middle", 0, 10], HKU: [255, 830, "HKU", 0, -30, "middle", 0, 10],
@@ -80,3 +82,14 @@ export const MAP_LINES = [
   { id: "eab", name: "EAL", col: "#5eb6e4", off: 0, hw: 2, branch: 1, pts: ["SHS","LMC"] },
   { id: "sil", name: "SIL", col: "#b5bd00", off: 0, pts: ["ADM","OCP","WCH","LET","SOH"] }
 ];
+
+
+/** Config for map.js (see there). */
+export const HK_MAP = {
+  ST, LINES: MAP_LINES, lines: MTR_LINES, zh: MTR_ZH, width: 1470, height: 980,
+  title: [["港鐵 MTR LIVE", 38, 1], ["HONG KONG · 10 LINES · 2 LEDS PER STATION", 11, 1], ["LEFT-HAND RUNNING: LED ON THE LEFT OF TRAVEL", 9.5, 0.6]],
+  titleX: 1420, side: "left", spread: 1.6, track: 6,
+  // label positions changed from the 1-LED board, where the wider capsules made labels collide
+  labels: { EXC: [18, -16, "start"], TKO: [0, -24, "middle"], HAH: [20, 4, "start"], YAT: [0, -26, "middle"] },
+  holes: [[48, 44], [1452, 44], [48, 956], [1452, 956]],
+};

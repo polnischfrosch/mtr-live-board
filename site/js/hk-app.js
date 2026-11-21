@@ -1,6 +1,7 @@
 import { MTR_LINES, MTR_NAMES, MTR_ZH } from "./mtr-data.js";
 import { createStore, storeAnswer, stationLeds, dueAt, lineInfo, mtrUrl } from "./mtr.js";
 import { buildMap, stationInfo } from "./map.js";
+import { HK_MAP } from "./map-layout.js";
 import { fetchJson, getSettings, saveSettings, log, stats, avg, onRequest, debugFile, VERSION } from "./net.js";
 
 const $ = (s) => document.querySelector(s);
@@ -64,7 +65,7 @@ async function hkWorker(gen) {
 async function replayLoop(gen) {
   if (!hk.replay) {
     $("#hk-status").textContent = "Loading recording…";
-    hk.replay = await (await fetch("data/mtr-sample.json")).json();
+    hk.replay = await (await fetch("../data/mtr-sample.json")).json();
   }
   const rows = hk.replay;
   const t0 = Date.parse(rows[0].t);
@@ -172,7 +173,7 @@ function renderHkStats() {
 // ---------------------------------------------------------------- Map
 let map = null, mapStation = null;
 function renderMap() {
-  if (!map) map = buildMap($("#map-svg"), (id) => { mapStation = id; map.select(id); renderMapInfo(); });
+  if (!map) map = buildMap($("#map-svg"), HK_MAP, (id) => { mapStation = id; map.select(id); renderMapInfo(); });
   const now = hkNow();
   const { lit, total } = map.update(hk.store, now, $("#map-mode").value);
   $("#map-status").innerHTML = `${hkStatusHtml()} · ${lit} of ${total} LEDs lit`;

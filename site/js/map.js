@@ -1,16 +1,18 @@
-// Map tab: the station board as a PCB, two LEDs per station (one per direction).
-// MTR trains run on the left, so each direction's LED sits on the left of its travel direction.
+// Map tab: a board drawn as a PCB, two LEDs per station (one per direction). Generic: the
+// layout, lines and network come in a config, so Hong Kong and Stuttgart share this file.
+//
+// config = {
+//   ST: { id: [x, y, name, label dx, dy, anchor ("none" = no label), bold, font size] },
+//   LINES: [{ name: line code, col, off, pts: [id | {via, x, y} | {stub: "label", x, y}], branch? }],
+//   lines: network lines { code: { stations: [...] } }, zh: { id: Chinese name } (optional),
+//   width, height, title: [[text, font size, opacity]], side: "left" | "right" (running side),
+//   spread, track, holes: [[x, y]]
+// }
 
-import { ST, MAP_LINES } from "./map-layout.js";
-import { MTR_LINES, MTR_ZH } from "./mtr-data.js";
-import { stationLeds, travelOrder, trains } from "./mtr.js";
+import { stationLeds, travelOrder, trains } from "./core.js";
 
 const NS = "http://www.w3.org/2000/svg";
-const TRACK = 6;         // units from the line's centre to each LED row (2 x 6 = 12 units = 2.4 mm)
-const SPREAD = 1.6;      // lines sharing a corridor are pushed this much further apart than on the 1-LED board
 const LED = 7;           // LED body size in units (1.5 mm package)
-// label positions changed from the 1-LED board, where the wider capsules made labels collide
-const LABEL = { EXC: [18, -16, "start"], TKO: [0, -24, "middle"], HAH: [20, 4, "start"], YAT: [0, -26, "middle"] };
 
 function el(tag, attrs, parent) {
   const e = document.createElementNS(NS, tag);
@@ -36,17 +38,23 @@ function offsetLine(P, off) {
   });
 }
 
-export function buildMap(svg, onPick) {
+export function buildMap(svg, cfg, onPick) {
+  const { ST, LINES: MAP_LINES } = cfg;
+  const MTR_ZH = cfg.zh || {};
+  const LABEL = cfg.labels || {};
+  const TRACK = cfg.track || 6;      // units from a line's centre to each LED row
+  const SPREAD = cfg.spread || 1.6;  // lines sharing a corridor are pushed further apart than on a 1-LED board
+  const W = cfg.width, H = cfg.height;
   svg.innerHTML = "";
-  svg.setAttribute("viewBox", "0 0 1500 1000");
+  svg.setAttribute("viewBox", `0 0 ${W + 30} ${H + 20}`);
   const defs = el("defs", {}, svg);
   defs.innerHTML = `
     <filter id="mglow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="3.5"/></filter>
     <pattern id="mhatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="7" stroke="#161c22" stroke-width="2.2"/></pattern>`;
-  el("rect", { x: 15, y: 10, width: 1470, height: 980, rx: 26, fill: "#0e1216", stroke: "#2a3138", "stroke-width": 2 }, svg);
-  el("rect", { x: 35, y: 30, width: 1430, height: 940, rx: 16, fill: "url(#mhatch)", opacity: 0.9 }, svg);
-  for (const [x, y] of [[48, 44], [1452, 44], [48, 956], [1452, 956]]) {
+  el("rect", { x: 15, y: 10, width: W, height: H, rx: 26, fill: "#0e1216", stroke: "#2a3138", "stroke-width": 2 }, svg);
+  el("rect", { x: 35, y: 30, width: W - 40, height: H - 40, rx: 16, fill: "url(#mhatch)", opacity: 0.9 }, svg);
+  for (const [x, y] of cfg.holes || [[48, 44], [W - 18, 44], [48, H - 24], [W - 18, H - 24]]) {
     el("circle", { cx: x, cy: y, r: 13, fill: "none", stroke: "#c9a34e", "stroke-width": 4 }, svg);
     el("circle", { cx: x, cy: y, r: 7.5, fill: "#0b0d10" }, svg);
   }
@@ -55,18 +63,22 @@ export function buildMap(svg, onPick) {
     t.textContent = txt;
     return t;
   };
-  silk(1420, 100, "港鐵 MTR LIVE", { "text-anchor": "end", "font-size": 38, "font-weight": 700, "font-family": "system-ui, sans-serif", "letter-spacing": 2 });
-  silk(1420, 122, "HONG KONG · 10 LINES · 2 LEDS PER STATION", { "text-anchor": "end", "font-size": 11, "letter-spacing": 1.5 });
-  silk(1420, 140, "LEFT-HAND RUNNING: LED ON THE LEFT OF TRAVEL", { "text-anchor": "end", "font-size": 9.5, opacity: 0.6, "letter-spacing": 1 });
+  let ty = cfg.titleY || 100;
+  for (const [text, size, op] of cfg.title || []) {
+    silk(cfg.titleX || W - 65, ty, text, { "text-anchor": "end", "font-size": size, "font-weight": size > 20 ? 700 : 400, opacity: op ?? 1,
+      "font-family": size > 20 ? "system-ui, sans-serif" : "ui-monospace, Menlo, Consolas, monospace", "letter-spacing": size > 20 ? 2 : 1.2 });
+    ty += size > 20 ? 22 : size + 6;
+  }
+  const leftHand = (cfg.side || "left") === "left";
 
   // geometry
   const lines = MAP_LINES.map((L) => {
-    const P = L.pts.map((p) => (typeof p === "string" ? { id: p, x: ST[p][0], y: ST[p][1] } : p));
+    const P = L.pts.map((p) => (typeof p === "string" ? { id: p, x: ST[p][0], y: ST[p][1] } : { ...p, via: true }));
     const centre = offsetLine(P, L.off * SPREAD);
-    const fwd = offsetLine(centre, -TRACK);     // left of travel in point order
-    const back = offsetLine(centre, TRACK);
+    const fwd = offsetLine(centre, leftHand ? -TRACK : TRACK);     // running side of travel in point order
+    const back = offsetLine(centre, leftHand ? TRACK : -TRACK);
     const code = L.name;
-    const known = new Set(MTR_LINES[code].stations);
+    const known = new Set(cfg.lines[code].stations);
     const stations = P.map((p, i) => ({ p, i })).filter(({ p }) => !p.via);
     return { ...L, code, P, centre, fwd, back, known, stations };
   });
@@ -80,6 +92,16 @@ export function buildMap(svg, onPick) {
         "stroke-width": L.branch ? 2 : 3, "stroke-linejoin": "round", "stroke-linecap": "round", opacity: L.branch ? 0.55 : 0.85,
       }, tracks);
     }
+  }
+
+  // stub labels: where a line runs on beyond the board
+  for (const L of lines) {
+    L.P.forEach((p, i) => {
+      if (!p.stub) return;
+      const prev = L.centre[Math.max(0, i - 1)], q = L.centre[i];
+      const dx = q.x - prev.x, dy = q.y - prev.y, len = Math.hypot(dx, dy) || 1;
+      silk(q.x + (dx / len) * 8, q.y + (dy / len) * 8 + 4, p.stub, { "font-size": 10, opacity: 0.75, "text-anchor": dx < -1 ? "end" : dx > 1 ? "start" : "middle", fill: L.col }, svg);
+    });
   }
 
   // capsules + labels, sized around all LEDs of a station
@@ -97,13 +119,14 @@ export function buildMap(svg, onPick) {
     const grow = (v) => (v === 0 ? 0 : v + Math.sign(v) * 6);
     const [lx, ly, anchor] = LABEL[id] || [s[3], s[4], s[5]];
     const dx = grow(lx), dy = grow(ly);
-    const parts = s[2].split("|"), side = anchor !== "middle";
+    const parts = s[2].split("|"), side = anchor !== "middle" && anchor !== "none";
     let enY;
     if (side) enY = s[1] + dy + 6;
     else if (dy < 0) enY = s[1] + dy - (parts.length - 1) * 12;
-    else enY = s[1] + dy + 13;
+    else enY = s[1] + dy + (MTR_ZH[id] ? 13 : 0);
     const g = el("g", { class: "map-label", "data-id": id, style: "cursor:pointer" }, labG);
-    silk(s[0] + dx, enY - 13, MTR_ZH[id] || "", { "text-anchor": anchor, "font-size": s[7] + 2, "font-weight": s[6] ? 700 : 500, "font-family": "'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" }, g);
+    if (anchor === "none") g.setAttribute("display", "none");
+    if (MTR_ZH[id]) silk(s[0] + dx, enY - 13, MTR_ZH[id], { "text-anchor": anchor, "font-size": s[7] + 2, "font-weight": s[6] ? 700 : 500, "font-family": "'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" }, g);
     const te = silk(s[0] + dx, enY, "", { "text-anchor": anchor, "font-size": s[7], "font-weight": s[6] ? 600 : 400 }, g);
     parts.forEach((part, k) => {
       const ts = el("tspan", { x: s[0] + dx }, te);
@@ -139,7 +162,7 @@ export function buildMap(svg, onPick) {
 
   // which MTR direction runs along the drawn point order, per line (needs data: DRL is flipped)
   function forwardDir(store, code, pts) {
-    const ids = pts.filter((p) => !p.via && MTR_LINES[code].stations.includes(p.id)).map((p) => p.id);
+    const ids = pts.filter((p) => !p.via && cfg.lines[code].stations.includes(p.id)).map((p) => p.id);
     const up = travelOrder(store, code, "UP");
     return up.indexOf(ids[0]) < up.indexOf(ids[ids.length - 1]) ? "UP" : "DOWN";
   }
@@ -156,7 +179,7 @@ export function buildMap(svg, onPick) {
         cache[k] = { fwd: stationLeds(store, led.code, f, now), back: stationLeds(store, led.code, b, now) };
       }
       const r = cache[k][led.side];
-      const idx = MTR_LINES[led.code].stations.indexOf(led.id);
+      const idx = cfg.lines[led.code].stations.indexOf(led.id);
       const c = r.cells[idx];
       const on = c === "on";
       if (on) lit++;
@@ -178,7 +201,7 @@ export function buildMap(svg, onPick) {
 /** Next trains at one station, for the info panel. */
 export function stationInfo(store, id, now) {
   const out = [];
-  for (const [code, L] of Object.entries(MTR_LINES)) {
+  for (const [code, L] of Object.entries(store.net.lines)) {
     if (!L.stations.includes(id)) continue;
     for (const d of ["UP", "DOWN"]) {
       const list = trains(store, code, id, d, now, 30);

@@ -57,16 +57,17 @@ export function trains(st, line, sta, d, now, past = 0) {
   return (e[d] || []).map(([at, dest]) => [(at - now) / 1000, dest]).filter(([s]) => s >= -past);
 }
 
-function reaches(st, order, k, dest) {
-  const BRANCH = st.net.branch || {};
+function reaches(st, line, order, k, dest) {
+  const branch = st.net.branch || {};
+  const via = branch[`${line}>${dest}`] || branch[dest];      // per line ("U1>Mühlhausen") or network-wide
   if (order.includes(dest)) return order.indexOf(dest) >= k;
-  if (BRANCH[dest] && order.includes(BRANCH[dest])) return order.indexOf(BRANCH[dest]) >= k;
+  if (via && order.includes(via)) return order.indexOf(via) >= k;
   return true;
 }
 
 function occupied(st, line, order, k, d, now) {
   const K = trains(st, line, order[k], d, now, GRACE);
-  const P = (trains(st, line, order[k - 1], d, now, GRACE) || []).filter(([, dest]) => reaches(st, order, k, dest));
+  const P = (trains(st, line, order[k - 1], d, now, GRACE) || []).filter(([, dest]) => reaches(st, line, order, k, dest));
   if (!K || !K.length) return false;
   const limit = (st.net.maxRun || {})[line] || st.net.defaultMaxRun || 420;
   if (K[0][0] > limit) return false;
