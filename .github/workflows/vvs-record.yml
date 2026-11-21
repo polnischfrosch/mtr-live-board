@@ -1,0 +1,36 @@
+name: VVS record
+
+# Records live Stuttgart departures and commits them to the "recordings" branch. Run by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long to record"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 tools/vvs_record.py ${{ inputs.minutes }}
+      - name: Commit to the recordings branch
+        run: |
+          name="vvs_$(date -u +%Y%m%d_%H%M).json"
+          mv vvs_recording.json "/tmp/$name"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin recordings || true
+          if git rev-parse --verify -q origin/recordings; then git checkout -B recordings origin/recordings; else git checkout --orphan recordings && git rm -rfq .; fi
+          cp "/tmp/$name" "$name"
+          git add "$name"
+          git commit -qm "Recording $name"
+          git push -q origin recordings
