@@ -19,19 +19,19 @@ UA = {"User-Agent": "mtr-live-board-probe/1.0", "Accept": "application/json"}
 STOPS = {
     "DAI": "de:08111:323", "MUE": "de:08111:281", "OEP": "de:08111:6020", "VOG": "de:08111:43",
     "VAI": "de:08111:6002",
-    "WLH": "de:08111:254", "ROS": "de:08111:6253", "WIL": "Wilhelmsplatz Bad Cannstatt",
+    "WLH": "de:08111:254", "ROS": "de:08111:6253", "WIL": "de:08111:6332",
     "MIN": "de:08111:28", "STO": "de:08111:26", "NEC": "de:08111:25",
     "STA": "de:08111:6024", "HBF": "de:08111:6112",
     "BOE": "de:08111:229", "BER": "de:08111:6073",
     "RBP": "de:08111:6056", "RAT": "de:08111:6074", "CHA": "de:08111:6075",
-    "MAR": "de:08111:6019", "ESP": "de:08111:6017", "BIH": "Stuttgart Bihlplatz",
-    "SUE": "Stuttgart Südheimer Platz", "WAL": "Stuttgart Waldeck", "KAL": "Stuttgart Kaltental",
-    "ENG": "Stuttgart Engelboldstraße", "VIA": "Stuttgart Vaihinger Viadukt", "FAU": "Stuttgart Fauststraße",
-    "SCH": "Stuttgart Vaihingen Schillerplatz", "RSS": "Stuttgart Rudolf-Sophien-Stift",
-    "UNI": "Stuttgart Universität", "SCR": "Stuttgart Schranne", "NOB": "Stuttgart Nobelstraße",
-    "LAU": "Stuttgart Lauchhau", "MPI": "Stuttgart Max-Planck-Institute", "SGA": "Stuttgart Schwabengalerie",
-    "KRE": "Stuttgart Krehlstraße", "HEE": "Stuttgart Heerstraße", "KAT": "Stuttgart Katzenbachstraße",
-    "AFE": "Stuttgart Am Feldrand",
+    "MAR": "de:08111:6019", "ESP": "de:08111:6017", "BIH": "de:08111:15",
+    "SUE": "de:08111:13", "WAL": "de:08111:6010", "KAL": "de:08111:6009",
+    "ENG": "de:08111:8", "VIA": "de:08111:6", "FAU": "de:08111:5",
+    "SCH": "de:08111:6004", "RSS": "de:08111:2209",
+    "UNI": "de:08111:6008", "SCR": "Stuttgart Schranne", "NOB": "Stuttgart Nobelstraße",
+    "LAU": "Stuttgart Lauchhau", "MPI": "Stuttgart Max-Planck-Institute", "SGA": "de:08111:6729",
+    "KRE": "de:08111:6201", "HEE": "de:08111:2593", "KAT": "de:08111:6011",
+    "AFE": "de:08111:2592",
 }
 LINES = {"U1", "U2", "U14", "92", "RT92", "81"}
 
@@ -102,7 +102,7 @@ def main():
             rec["error"] = f"{type(e).__name__}: {e}"
             time.sleep(20)          # VVS refuses connections after a burst: back off
         out["stops"][key] = rec
-        print(f"{key:<4} {rec.get('id')!s:<16} {rec.get('name')!s:<45} {', '.join(rec.get('lines', {}).keys())[:160]}"
+        print(f"{key:<4} {rec.get('id')!s:<16} {rec.get('name')!s:<45} {' | '.join(f'{k} {v[0][11:16] if v and v[0] else ''}' for k, v in rec.get('lines', {}).items())[:300]}"
               + (f"  ERROR {rec['error']}" if rec.get("error") else ""))
         time.sleep(3)              # gentle: VVS blocked a faster run
     with open("vvs_probe.json", "w", encoding="utf-8") as f:
